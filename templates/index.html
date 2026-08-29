@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GramSetu — Smart Rural Problem-to-Solution Network</title>
+  <meta name="description" content="AI-driven civic grievance redressal network connecting rural citizens directly with administrative departments through photo evidence, voice in native languages, and real GPS coordinates.">
+  
+  <!-- Favicon / SVG Emblem -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇮🇳</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Tiro+Devanagari+Hindi:ital@0;1&family=Tiro+Telugu:ital@0;1&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS for Problem Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- GramSetu Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- National Tricolor Accent Bar -->
+  <div class="national-accent-bar"></div>
+
+  <!-- Header / Navigation Bar -->
+  <header class="header-navbar">
+    <div class="brand-container" onclick="showSection('home')">
+      <div class="brand-emblem">🏛️</div>
+      <div class="brand-text">
+        <h1 data-i18n="brandName">GramSetu</h1>
+        <p data-i18n="brandTagline">One Voice, One Photo, One Connected Village</p>
+      </div>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="nav-center">
+      <a class="nav-link active" data-section="home" onclick="showSection('home')">
+        <span>🏠</span> <span data-i18n="navHome">Home</span>
+      </a>
+      <a class="nav-link" data-section="report" onclick="showSection('report')">
+        <span>📸</span> <span data-i18n="navReport">Report a Problem</span>
+      </a>
+      <a class="nav-link" data-section="map" onclick="showSection('map')">
+        <span>🗺️</span> <span data-i18n="navMap">Problem Map</span>
+      </a>
+      <a class="nav-link" id="navMyComplaintsLink" data-section="my-complaints" onclick="showSection('my-complaints')" style="display:none;">
+        <span>📋</span> <span data-i18n="navMyComplaints">My Complaints</span>
+      </a>
+      <a class="nav-link" id="navAuthorityLink" data-section="authority-portal" onclick="showSection('authority-portal')">
+        <span>🏛️</span> <span data-i18n="navAuthorityLogin">Authority Portal</span>
+      </a>
+    </nav>
+
+    <!-- Language Switcher & Auth Actions -->
+    <div class="nav-actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="te">తెలుగు</button>
+        <button class="lang-btn" data-lang="hi">हिन्दी</button>
+      </div>
+
+      <!-- Guest Login Buttons -->
+      <div class="auth-btn-group" id="navGuestGroup">
+        <button class="btn btn-sm btn-outline-light" onclick="openModal('citizenLoginModal')">
+          <span>👤</span> <span data-i18n="navCitizenLogin">Citizen Login</span>
+        </button>
+      </div>
+
+      <!-- Logged-in User Controls -->
+      <div class="auth-btn-group" id="navUserGroup" style="display: none;">
+        <button class="btn btn-sm btn-outline-light" onclick="openNotificationsModal()" style="position: relative;">
+          <span>🔔</span>
+          <span id="notifBadge" style="display:none; position:absolute; top:-4px; right:-4px; background:#EF4444; color:#FFFFFF; border-radius:50%; width:18px; height:18px; font-size:0.7rem; align-items:center; justify-content:center; font-weight:bold;">0</span>
+        </button>
+        <div class="user-badge" onclick="showSection(STATE.user.role === 'authority' ? 'authority-portal' : 'citizen-dashboard')" style="cursor: pointer;">
+          <span class="avatar-dot"></span>
+          <div>
+            <div id="navUserName" style="font-weight: 700; font-size: 0.82rem; color: #FFFFFF;">User</div>
+            <div id="navUserRole" style="font-size: 0.7rem; color: #CBD5E1;">Citizen</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">
+          <span data-i18n="navLogout">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container (SPA Routing) -->
+  <main>
+
+    <!-- SECTION 1: HOME & HERO LANDING -->
+    <section id="home" class="page-section active">
+      <div class="hero-card">
+        <div class="hero-pill">
+          <span>🇮🇳 Smart India Hackathon Prototype</span>
+          <span>•</span>
+          <span data-i18n="demoAccountNotice">Verified Citizen & Authority Portal</span>
+        </div>
+        <h1 data-i18n="heroTitle">Smart Rural Problem-to-Solution Network</h1>
+        <p data-i18n="heroSubtitle">
+          Report local infrastructure grievances with real photo evidence, voice in your mother tongue, and exact GPS coordinates. Connected directly with responsible administrative authorities.
+        </p>
+        <div class="hero-btn-row">
+          <button class="btn btn-lg btn-accent" onclick="showSection('report')">
+            <span data-i18n="heroReportBtn">📸 Report a Problem Now</span>
+          </button>
+          <button class="btn btn-lg btn-outline-light" onclick="showSection('map')">
+            <span data-i18n="heroTrackBtn">🗺️ Explore Problem Map</span>
+          </button>
+          <button class="btn btn-lg btn-emerald" onclick="openModal('authorityLoginModal')">
+            <span data-i18n="heroAuthorityBtn">🏛️ Authority Portal</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- How It Works Flow -->
+      <div class="section-header">
+        <h2 data-i18n="howItWorksTitle">How GramSetu Works</h2>
+        <p>A transparent, AI-assisted grievance lifecycle from citizen submission to on-ground resolution.</p>
+      </div>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="flow-icon">📸</div>
+          <h3 data-i18n="howStep1Title">1. Capture & Speak</h3>
+          <p data-i18n="howStep1Desc">Upload real photo evidence, speak in Telugu/Hindi/English, and auto-detect your exact GPS village location.</p>
+        </div>
+        <div class="flow-card">
+          <div class="flow-icon">🤖</div>
+          <h3 data-i18n="howStep2Title">2. AI Classification</h3>
+          <p data-i18n="howStep2Desc">Smart AI assesses category, determines safety priority, and routes the complaint to the exact nodal department.</p>
+        </div>
+        <div class="flow-card">
+          <div class="flow-icon">🚨</div>
+          <h3 data-i18n="howStep3Title">3. Hotspot Mapping</h3>
+          <p data-i18n="howStep3Desc">Clustering algorithms detect recurring village problems and infrastructure failure hotspots.</p>
+        </div>
+        <div class="flow-card">
+          <div class="flow-icon">🛠️</div>
+          <h3 data-i18n="howStep4Title">4. Rapid Resolution</h3>
+          <p data-i18n="howStep4Desc">Authorities inspect, update progress on live timeline, and notify the citizen upon verified resolution.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: CITIZEN DASHBOARD -->
+    <section id="citizen-dashboard" class="page-section">
+      <div style="background: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <span style="font-size: 0.85rem; font-weight: 700; color: #2563EB; text-transform: uppercase;" data-i18n="citizenDashboardTitle">Citizen Civic Portal</span>
+            <h2 style="font-size: 1.85rem; color: #0B2239; margin-top: 0.25rem;">
+              <span data-i18n="welcomeUser">Welcome to GramSetu,</span> <span id="citizenWelcomeName" style="color: #2563EB;">Citizen</span>!
+            </h2>
+          </div>
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.85rem; color: #1E40AF; font-weight: 700;">
+            Preferred Language: <span id="citizenCurrentLang">EN</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header" style="text-align: left; margin: 1rem 0 1.5rem 0;">
+        <h3 data-i18n="quickActionsTitle" style="font-size: 1.4rem; color: #0B2239;">Quick Civic Actions</h3>
+      </div>
+
+      <div class="actions-grid">
+        <div class="action-card" onclick="showSection('report')">
+          <div class="action-card-icon">📸</div>
+          <h3 data-i18n="actionReportProblem">Report a Problem</h3>
+          <p data-i18n="actionReportDesc">Submit infrastructure grievance with photo & voice</p>
+        </div>
+        <div class="action-card" onclick="showSection('my-complaints')">
+          <div class="action-card-icon">📋</div>
+          <h3 data-i18n="actionMyComplaints">My Grievances</h3>
+          <p data-i18n="actionMyComplaintsDesc">Track resolution status & progress timeline</p>
+        </div>
+        <div class="action-card" onclick="showSection('map')">
+          <div class="action-card-icon">🗺️</div>
+          <h3 data-i18n="actionProblemMap">Live Problem Map</h3>
+          <p data-i18n="actionProblemMapDesc">View village issues & detected hotspots</p>
+        </div>
+        <div class="action-card" onclick="openNotificationsModal()">
+          <div class="action-card-icon">🔔</div>
+          <h3 data-i18n="actionNotifications">Notifications</h3>
+          <p data-i18n="actionNotificationsDesc">Real-time updates from government departments</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: REPORT A PROBLEM WIZARD -->
+    <section id="report" class="page-section">
+      <div class="wizard-container">
+        <div class="section-header" style="margin-top: 0;">
+          <h2 data-i18n="reportTitle">Grievance Redressal Submission</h2>
+          <p>Submit complete details. Real photo evidence and GPS location ensure immediate authority routing.</p>
+        </div>
+
+        <!-- 1 Complaint Per Day Anti-Spam Banner -->
+        <div id="dailyLimitBanner" class="hotspot-banner" style="display: none; margin-bottom: 1.5rem;"></div>
+
+        <form id="grievanceForm" onsubmit="handleGrievanceSubmit(event)">
+          
+          <!-- STEP 1: REAL PHOTO EVIDENCE -->
+          <div class="form-group">
+            <label class="form-label" data-i18n="photoLabel">Real Photograph of the Problem (Strictly Required)</label>
+            <div class="photo-box-container" id="photoBoxContainer">
+              <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📷</div>
+              <p id="photoStatusText" style="color: #64748B; font-size: 0.9rem;" data-i18n="noPhotoSelected">No photo evidence selected yet.</p>
+              <img id="photoPreviewImage" class="photo-preview-img" style="display: none;" alt="Preview">
+              
+              <div class="photo-action-buttons">
+                <button type="button" class="btn btn-sm btn-primary" onclick="openLiveCameraModal()">
+                  <span data-i18n="photoCaptureBtn">📷 Open Live Camera</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="triggerPhotoFileInput()">
+                  <span data-i18n="photoUploadBtn">📁 Upload Photo from Device</span>
+                </button>
+              </div>
+              <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" style="display: none;" onchange="handlePhotoFileSelected(event)">
+              <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.5rem;" data-i18n="photoCaptureNotice">
+                Real photograph evidence is mandatory. Stock/AI images are prohibited and filtered out.
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: GPS VILLAGE / LOCALITY LOCATION -->
+          <div class="form-group">
+            <label class="form-label" data-i18n="locationTitle">GPS Village / Locality Location</label>
+            <div class="location-banner" id="locationBanner">
+              <div class="loc-icon">📍</div>
+              <div style="flex: 1;">
+                <div id="locationStatusText" style="font-weight: 700; color: #1E3A8A;" data-i18n="locationDetecting">Detecting your current GPS location...</div>
+                <div id="locationDetailsBox" style="display: none; margin-top: 0.25rem;"></div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline" onclick="detectCurrentGPSLocation()">🔄 Refresh GPS</button>
+            </div>
+
+            <!-- Manual Coordinate Fallback (if GPS denied) -->
+            <div id="manualLocationBox" style="display: none; background: #FFFBEB; border: 1px solid #FDE68A; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+              <div style="font-size: 0.85rem; color: #92400E; font-weight: 700; margin-bottom: 0.5rem;" data-i18n="locationManualSelect">
+                Select coordinates manually if GPS permission was denied:
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <input type="text" id="manualAddressInput" class="form-control" style="flex: 2; min-width: 200px;" placeholder="Village Name / Ward Number / Landmark" value="Gandhi Nagar Sector 4">
+                <button type="button" class="btn btn-sm btn-accent" onclick="updateManualCoordinates(17.385044, 78.486671, document.getElementById('manualAddressInput').value)">Set Location</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3: VOICE & TEXT GRIEVANCE DESCRIPTION -->
+          <div class="form-group">
+            <label class="form-label" data-i18n="descLabel">Problem Description (Telugu, Hindi, or English):</label>
+            
+            <!-- Voice Input Card -->
+            <div class="voice-recorder-card">
+              <div class="mic-btn-container">
+                <button type="button" id="micRecordBtn" class="btn-mic" onclick="toggleVoiceRecording()" title="Click to speak">
+                  🎙️
+                </button>
+                <div>
+                  <div id="voiceStatusText" style="font-weight: 700; color: #0B2239; font-size: 0.92rem;" data-i18n="voiceSpeakBtn">🎙️ Click to Speak</div>
+                  <div style="font-size: 0.78rem; color: #64748B;">Supported: Telugu (తెలుగు), Hindi (हिन्दी), English</div>
+                </div>
+              </div>
+            </div>
+
+            <textarea id="problemDescInput" class="form-control" data-i18n-placeholder="descPlaceholder" placeholder="Describe the issue in detail or speak using the microphone button above..." oninput="triggerLiveAIAnalysis()"></textarea>
+          </div>
+
+          <!-- STEP 4: CATEGORY & AI ANALYSIS REVIEW -->
+          <div class="form-group">
+            <label class="form-label" data-i18n="categoryLabel">Grievance Category:</label>
+            <select id="problemCategorySelect" class="form-control" required>
+              <option value="Electricity" data-i18n="catElectricity">Electricity / Streetlights</option>
+              <option value="Roads" data-i18n="catRoads">Roads & Bridges</option>
+              <option value="Water Supply" data-i18n="catWater">Water Supply & Pipeline</option>
+              <option value="Sanitation" data-i18n="catSanitation">Sanitation / Garbage</option>
+              <option value="Public Transport" data-i18n="catTransport">Public Transport</option>
+              <option value="Schools" data-i18n="catSchool">Schools & Education</option>
+              <option value="Health Centres" data-i18n="catHealth">Health Centres / Hospitals</option>
+              <option value="Agricultural Infrastructure" data-i18n="catAgri">Agricultural Infrastructure</option>
+              <option value="Other" data-i18n="catOther">Other Local Issue</option>
+            </select>
+          </div>
+
+          <!-- AI Live Analysis Preview Card -->
+          <div id="aiPreviewCard" class="ai-preview-card" style="display: none;">
+            <div class="ai-badge-header">
+              <span class="ai-pill">✨ AI-ASSISTED CLASSIFICATION</span>
+              <span style="font-size: 0.75rem; color: #065F46; font-weight: 700;">Prototype ML Model</span>
+            </div>
+            <div class="ai-details-grid">
+              <div class="ai-detail-item">
+                <div class="ai-detail-label" data-i18n="aiCategory">Suggested Category</div>
+                <div class="ai-detail-val" id="aiPreviewCategory">Electricity</div>
+              </div>
+              <div class="ai-detail-item">
+                <div class="ai-detail-label" data-i18n="aiPriority">Assessed Priority</div>
+                <div class="ai-detail-val" id="aiPreviewPriority">MEDIUM</div>
+              </div>
+              <div class="ai-detail-item" style="grid-column: 1 / -1;">
+                <div class="ai-detail-label" data-i18n="aiDept">Assigned Department</div>
+                <div class="ai-detail-val" id="aiPreviewDept" style="color: #1E40AF;">Electricity Department</div>
+              </div>
+              <div class="ai-detail-item" style="grid-column: 1 / -1;">
+                <div class="ai-detail-label" data-i18n="aiReason">Priority Justification</div>
+                <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;" id="aiPreviewReason">Potential public safety impact.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Anti-Bot Math CAPTCHA -->
+          <div class="form-group" style="background: #F8FAFC; border: 1px solid var(--border-light); padding: 1.25rem; border-radius: 8px;">
+            <label class="form-label" data-i18n="captchaLabel">Security Verification Challenge:</label>
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <span id="captchaChallenge" style="font-size: 1.3rem; font-weight: 800; background: #E2E8F0; padding: 0.4rem 1rem; border-radius: 6px; letter-spacing: 2px; color: #0B2239;">5 + 3 = ?</span>
+              <input type="number" id="captchaAnswerInput" class="form-control" style="max-width: 140px;" placeholder="Answer" required>
+              <button type="button" class="btn btn-sm btn-outline" onclick="generateCaptcha()">🔄</button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+            <button type="button" class="btn btn-outline" onclick="showSection('citizen-dashboard')">Cancel</button>
+            <button type="submit" id="reportSubmitBtn" class="btn btn-lg btn-accent">
+              <span data-i18n="submitBtn">🚀 Submit Grievance</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+    <!-- SECTION 4: MY COMPLAINTS & TIMELINE -->
+    <section id="my-complaints" class="page-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2 style="font-size: 1.85rem; color: #0B2239;" data-i18n="navMyComplaints">My Grievances</h2>
+          <p style="color: #64748B;">Track real-time progress and departmental updates for your submitted issues.</p>
+        </div>
+        <button class="btn btn-accent" onclick="showSection('report')">📸 Report Another Problem</button>
+      </div>
+
+      <div id="myComplaintsContainer"></div>
+    </section>
+
+    <!-- SECTION 5: INTERACTIVE PROBLEM MAP -->
+    <section id="map" class="page-section">
+      <div class="map-layout">
+        <div class="map-controls-card">
+          <div>
+            <h2 style="font-size: 1.5rem; color: #0B2239;" data-i18n="mapTitle">Rural Infrastructure Problem Map</h2>
+            <p style="color: #64748B; font-size: 0.9rem;" data-i18n="mapSubtitle">Live GPS coordinates of citizen grievances and AI-detected infrastructure failure hotspots.</p>
+          </div>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <select id="mapCategoryFilter" class="form-control" style="width: auto;" onchange="filterMapLayers()">
+              <option value="all" data-i18n="allCategories">All Categories</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Roads">Roads</option>
+              <option value="Water Supply">Water Supply</option>
+              <option value="Sanitation">Sanitation</option>
+              <option value="Other">Other</option>
+            </select>
+            <select id="mapStatusFilter" class="form-control" style="width: auto;" onchange="filterMapLayers()">
+              <option value="all" data-i18n="allStatuses">All Statuses</option>
+              <option value="Submitted">Submitted</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Hotspot Warning Container -->
+        <div id="mapAlertsContainer"></div>
+
+        <!-- Leaflet Map Box -->
+        <div id="problemMapContainer" class="map-container"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: AUTHORITY COMMAND PORTAL -->
+    <section id="authority-portal" class="page-section">
+      <div style="background: linear-gradient(135deg, #0B2239 0%, #153E6B 100%); color: #FFFFFF; border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #FBBF24; text-transform: uppercase;" data-i18n="authTitle">Administrative Command Center</div>
+            <h2 style="font-size: 1.85rem; margin-top: 0.25rem;">Official Grievance Triage Dashboard</h2>
+            <p style="color: #CBD5E1; font-size: 0.95rem;">Review citizen photo evidence, assign teams, manage hotspots, and publish verified resolution notes.</p>
+          </div>
+          <button class="btn btn-outline-light" onclick="loadAuthorityDashboard()">🔄 Refresh Records</button>
+        </div>
+      </div>
+
+      <!-- KPI Statistics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header" data-i18n="statTotal">Total Complaints</div>
+          <div class="stat-card-val" id="authStatTotal">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #F59E0B;">
+          <div class="stat-card-header" data-i18n="statPending">Pending Review</div>
+          <div class="stat-card-val" id="authStatPending" style="color: #D97706;">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #3B82F6;">
+          <div class="stat-card-header" data-i18n="statInProgress">In Progress</div>
+          <div class="stat-card-val" id="authStatInProgress" style="color: #2563EB;">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #10B981;">
+          <div class="stat-card-header" data-i18n="statResolved">Resolved</div>
+          <div class="stat-card-val" id="authStatResolved" style="color: #059669;">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #EF4444;">
+          <div class="stat-card-header" data-i18n="statHighPriority">High Priority</div>
+          <div class="stat-card-val" id="authStatHighPriority" style="color: #DC2626;">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #8B5CF6;">
+          <div class="stat-card-header" data-i18n="statHotspots">Active Hotspots</div>
+          <div class="stat-card-val" id="authStatHotspots" style="color: #7C3AED;">0</div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown & Filterable Table Layout -->
+      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        
+        <!-- Category Distribution Meters -->
+        <div style="background: #FFFFFF; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+          <h3 style="font-size: 1.1rem; color: #0B2239; margin-bottom: 1.25rem; font-weight: 800;">Category Load</h3>
+          <div id="categoryBreakdownContainer"></div>
+        </div>
+
+        <!-- Filterable Complaint Table Card -->
+        <div class="table-card" style="margin-bottom: 0;">
+          <div style="padding: 1.25rem; border-bottom: 1px solid var(--border-light); display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;">
+            <input type="text" id="authSearchInput" class="form-control" style="max-width: 260px;" placeholder="Search ID, location, text..." oninput="loadAuthorityComplaintsTable()">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <select id="authFilterStatus" class="form-control" style="width: auto;" onchange="loadAuthorityComplaintsTable()">
+                <option value="all">All Statuses</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Assigned">Assigned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+              <select id="authFilterCategory" class="form-control" style="width: auto;" onchange="loadAuthorityComplaintsTable()">
+                <option value="all">All Categories</option>
+                <option value="Electricity">Electricity</option>
+                <option value="Roads">Roads</option>
+                <option value="Water Supply">Water Supply</option>
+                <option value="Sanitation">Sanitation</option>
+              </select>
+              <select id="authFilterPriority" class="form-control" style="width: auto;" onchange="loadAuthorityComplaintsTable()">
+                <option value="all">All Priorities</option>
+                <option value="HIGH">HIGH</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="LOW">LOW</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th data-i18n="tableId">Complaint ID</th>
+                  <th data-i18n="tableCategory">Category</th>
+                  <th data-i18n="tableLocation">Location / Village</th>
+                  <th data-i18n="tablePriority">Priority</th>
+                  <th data-i18n="tableStatus">Status</th>
+                  <th data-i18n="tableDate">Date</th>
+                  <th data-i18n="tableAction">Action</th>
+                </tr>
+              </thead>
+              <tbody id="authorityTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       MODALS & DIALOGS
+       ========================================== -->
+
+  <!-- Citizen Login Modal -->
+  <div class="modal-overlay" id="citizenLoginModal">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 data-i18n="navCitizenLogin">Citizen Login</h3>
+        <button class="modal-close-btn" onclick="closeModal('citizenLoginModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleCitizenLogin(event)">
+          <div class="form-group">
+            <label class="form-label">Email or 10-Digit Mobile Number:</label>
+            <input type="text" id="loginIdentifier" class="form-control" placeholder="e.g. 9876543210 or citizen@gramsetu.in" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password:</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+          </div>
+          
+          <!-- Prototype Demo Accounts Quick Fill -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 0.85rem; border-radius: 8px; margin-bottom: 1.25rem;">
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748B; text-transform: uppercase; margin-bottom: 0.35rem;">⚡ Quick Demo Accounts (Hackathon):</div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoCitizen('citizen@gramsetu.in', 'citizen123', 'te')">👤 Ravi (Telugu)</button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoCitizen('priya@gramsetu.in', 'citizen123', 'hi')">👤 Priya (Hindi)</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Login to Citizen Portal</button>
+        </form>
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.88rem; color: #64748B;">
+          New citizen? <a href="javascript:void(0)" onclick="switchToRegister()" style="color: #2563EB; font-weight: 700;">Create Account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Citizen Register Modal -->
+  <div class="modal-overlay" id="citizenRegisterModal">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3>Citizen Registration</h3>
+        <button class="modal-close-btn" onclick="closeModal('citizenRegisterModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleCitizenRegister(event)">
+          <div class="form-group">
+            <label class="form-label">Full Name:</label>
+            <input type="text" id="regName" class="form-control" placeholder="Enter full name" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Mobile Number:</label>
+              <input type="tel" id="regMobile" class="form-control" placeholder="10-digit mobile" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address:</label>
+              <input type="email" id="regEmail" class="form-control" placeholder="email@example.com" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Village / Ward / Area:</label>
+            <input type="text" id="regVillage" class="form-control" placeholder="e.g. Ward 4, Gandhi Nagar" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Password:</label>
+              <input type="password" id="regPassword" class="form-control" placeholder="Minimum 6 characters" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preferred Language:</label>
+              <select id="regLang" class="form-control">
+                <option value="te">తెలుగు (Telugu)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-accent" style="width: 100%;">Create Account & Enter Dashboard</button>
+        </form>
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.88rem; color: #64748B;">
+          Already registered? <a href="javascript:void(0)" onclick="switchToLogin()" style="color: #2563EB; font-weight: 700;">Login Here</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authority Login Modal -->
+  <div class="modal-overlay" id="authorityLoginModal">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header" style="background: #0B2239; color: #FFFFFF;">
+        <h3 style="color: #FFFFFF;" data-i18n="navAuthorityLogin">Authority Portal Login</h3>
+        <button class="modal-close-btn" style="color: #FFFFFF;" onclick="closeModal('authorityLoginModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleAuthorityLogin(event)">
+          <div class="form-group">
+            <label class="form-label">Official Department ID or Email:</label>
+            <input type="text" id="authIdentifier" class="form-control" placeholder="officer.dept@gramsetu.gov.in" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Secure Officer Password:</label>
+            <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required>
+          </div>
+
+          <!-- Prototype Authority Demo Accounts -->
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 0.85rem; border-radius: 8px; margin-bottom: 1.25rem;">
+            <div style="font-size: 0.75rem; font-weight: 800; color: #1E40AF; text-transform: uppercase; margin-bottom: 0.35rem;">⚡ Quick Demo Officer Accounts:</div>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoAuthority('admin@gramsetu.gov.in', 'admin123')">🏛️ District Admin</button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoAuthority('officer.electricity@gramsetu.gov.in', 'demo123')">⚡ Electricity</button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoAuthority('officer.pwd@gramsetu.gov.in', 'demo123')">🛣️ PWD Roads</button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoAuthority('officer.water@gramsetu.gov.in', 'demo123')">🚰 Water Board</button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="fillDemoAuthority('officer.sanitation@gramsetu.gov.in', 'demo123')">🧹 Sanitation</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Authorize & Enter Command Center</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live WebRTC Camera Modal -->
+  <div class="modal-overlay" id="cameraModal">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3>📷 Live Camera Photo Capture</h3>
+        <button class="modal-close-btn" onclick="closeCameraModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div class="camera-viewfinder">
+          <video id="cameraVideoFeed" autoplay playsinline></video>
+        </div>
+        <div style="margin-top: 1rem;">
+          <button type="button" class="btn btn-lg btn-emerald" onclick="captureSnapshotFromCamera()">
+            📸 Capture Photo Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission Success Confirmation Modal -->
+  <div class="modal-overlay" id="submissionSuccessModal">
+    <div class="modal-card" style="max-width: 480px; text-align: center;">
+      <div class="modal-body" style="padding: 2.5rem 1.5rem;">
+        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🎉</div>
+        <h2 style="color: #0B2239; font-size: 1.6rem; margin-bottom: 0.5rem;">Grievance Submitted Successfully!</h2>
+        <div style="background: #F0FDF4; border: 1.5px solid #A7F3D0; padding: 1rem; border-radius: 12px; margin: 1.25rem 0;">
+          <div style="font-size: 0.8rem; color: #065F46; font-weight: 700;">OFFICIAL COMPLAINT TRACKING ID</div>
+          <div id="successComplaintId" style="font-size: 1.8rem; font-weight: 800; color: #047857; letter-spacing: 1px;">GS-2026-00001</div>
+          <div id="successStatus" style="font-size: 0.85rem; color: #059669; font-weight: 700; margin-top: 4px;">Status: Submitted</div>
+          <div id="successPhotoNote" style="font-size: 0.78rem; color: #475569; margin-top: 4px;"></div>
+        </div>
+        <p style="font-size: 0.92rem; color: #64748B; margin-bottom: 1.5rem;">
+          Your issue has been logged, classified by AI, and routed to the respective departmental division. You will receive live status notifications as work progresses.
+        </p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <button class="btn btn-primary" onclick="closeModal('submissionSuccessModal'); showSection('my-complaints');">
+            📋 Track in My Complaints
+          </button>
+          <button class="btn btn-outline" onclick="closeModal('submissionSuccessModal'); showSection('citizen-dashboard');">
+            Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Complaint Inspector Modal (Authority - Citizen Privacy Protected) -->
+  <div class="modal-overlay" id="complaintInspectorModal">
+    <div class="modal-card modal-card-lg" style="max-width: 860px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="inspector-badge-icon">🏛️</div>
+          <div>
+            <span class="inspector-eyebrow">Official Redressal Dossier</span>
+            <h3 id="inspectComplaintId" style="margin-top: 1px; font-size: 1.35rem; color: #0F172A;">#GS-2026-00001</h3>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('complaintInspectorModal')">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.5rem 1.75rem;">
+        
+        <!-- Citizen Uploaded Photo Evidence (Strict 1-to-1 Rule) -->
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label" style="font-weight: 700; color: #0F172A;" data-i18n="citizenEvidencePhoto">On-Ground Photo Evidence</label>
+          <div id="inspectPhotoContainer"></div>
+        </div>
+
+        <!-- Description & Voice Transcript Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          <div class="inspector-text-card">
+            <div class="text-card-label">📝 Grievance Description</div>
+            <p id="inspectDesc" class="text-card-content"></p>
+          </div>
+          <div class="inspector-text-card">
+            <div class="text-card-label">🎙️ Speech-to-Text Voice Transcript</div>
+            <p id="inspectTranscript" class="text-card-content font-italic"></p>
+          </div>
+        </div>
+
+        <!-- Location & Geospatial Intelligence Meta (Strict Citizen Privacy: Only Location & GPS Coordinates) -->
+        <div class="inspector-location-card">
+          <div class="inspector-location-header">
+            <div class="inspector-location-pill">📍 Location & Geospatial Dossier</div>
+            <span class="inspector-privacy-badge">🔒 Citizen Identity Protected</span>
+          </div>
+          <div class="inspector-location-grid">
+            <div class="inspector-geo-item">
+              <span class="geo-label">Village / Area:</span>
+              <span class="geo-val" id="inspectLocation">—</span>
+            </div>
+            <div class="inspector-geo-item">
+              <span class="geo-label">GPS Coordinates:</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="geo-val font-mono" id="inspectGPS">—</span>
+                <a id="inspectMapLink" href="#" target="_blank" class="btn btn-xs btn-outline-primary" style="display: none; padding: 2px 8px; font-size: 0.72rem; text-decoration: none; border-radius: 4px;">
+                  🗺️ Open in Google Maps
+                </a>
+              </div>
+            </div>
+            <div class="inspector-geo-item">
+              <span class="geo-label">Reported On:</span>
+              <span class="geo-val" id="inspectCreatedDate">—</span>
+            </div>
+            <div class="inspector-geo-item">
+              <span class="geo-label">Submission Channel:</span>
+              <span class="geo-val" style="color: #059669; font-weight: 700;">✓ Verified Civic Redressal Network</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Classification vs Priority Overview -->
+        <div class="ai-preview-card" style="margin-bottom: 1.25rem;">
+          <div class="ai-badge-header">
+            <span class="ai-pill">🤖 AI TRIAGE ANALYSIS</span>
+          </div>
+          <div class="ai-details-grid">
+            <div class="ai-detail-item">
+              <div class="ai-detail-label">AI Assessed Category</div>
+              <div class="ai-detail-val" id="inspectAICat"></div>
+            </div>
+            <div class="ai-detail-item">
+              <div class="ai-detail-label">AI Risk Level</div>
+              <div class="ai-detail-val" id="inspectAIPri"></div>
+            </div>
+            <div class="ai-detail-item" style="grid-column: 1 / -1;">
+              <div class="ai-detail-label">Safety & Infrastructure Assessment</div>
+              <div style="font-size: 0.88rem; color: #334155; margin-top: 3px;" id="inspectAIPriReason"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authority Action Controls -->
+        <div class="inspector-action-card">
+          <h4 style="font-size: 1.05rem; color: #0F172A; margin-bottom: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <span>⚡</span> <span>Official Redressal Actions</span>
+          </h4>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label class="form-label" data-i18n="updateStatusLabel">Official Status:</label>
+              <select id="inspectStatusSelect" class="form-control select-enhanced">
+                <option value="Submitted">Submitted</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Assigned">Assigned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Rejected">Rejected / Invalid</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Department Assignment:</label>
+              <select id="inspectDeptSelect" class="form-control select-enhanced">
+                <option value="Electricity Department">Electricity Department</option>
+                <option value="Roads & Public Works Department (PWD)">Roads & Public Works (PWD)</option>
+                <option value="Rural Water Supply & Sanitation Department">Water Supply Department</option>
+                <option value="Panchayat Sanitation Department">Sanitation Department</option>
+                <option value="School Education Department">Education Department</option>
+                <option value="Health & Family Welfare Department">Health Department</option>
+                <option value="State Transport Department">Transport Department</option>
+                <option value="Agriculture & Irrigation Department">Agriculture Department</option>
+                <option value="District Grievance Cell">District Grievance Cell</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Urgency Priority:</label>
+              <select id="inspectPrioritySelect" class="form-control select-enhanced">
+                <option value="HIGH">🔴 HIGH (Urgent)</option>
+                <option value="MEDIUM">🟡 MEDIUM (Normal)</option>
+                <option value="LOW">🟢 LOW (Routine)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="resolutionNotesLabel">
+              Official Resolution Notes <span style="font-weight: normal; color: #EF4444;">(Mandatory when marking Resolved)</span>:
+            </label>
+            <textarea id="inspectResolutionNotes" class="form-control" style="min-height: 85px; font-size: 0.9rem;" placeholder="e.g. Field team dispatched. Problem resolved on ground and tested on 2026-08-30."></textarea>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #E2E8F0;">
+            <button type="button" id="inspectSpamToggleBtn" class="btn btn-sm btn-outline" onclick="toggleSpamFlag()">
+              ⚠️ Flag as Suspicious / Spam
+            </button>
+            <button type="button" id="inspectSaveBtn" class="btn btn-emerald btn-lg" onclick="saveInspectorUpdates()">
+              💾 <span data-i18n="saveChangesBtn">Save Updates</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div class="modal-overlay" id="notificationsModal">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 data-i18n="actionNotifications">Official Notifications</h3>
+        <button class="modal-close-btn" onclick="closeModal('notificationsModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="notifsListContainer" style="max-height: 60vh; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Center -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div>
+        <div style="font-weight: 800; color: #FFFFFF; font-size: 1.1rem;">GramSetu — Smart Rural Problem-to-Solution Network</div>
+        <div style="font-size: 0.82rem; color: #94A3B8; margin-top: 2px;">Smart India Hackathon Prototype • National Civic-Tech Infrastructure</div>
+      </div>
+      <div style="display: flex; gap: 1rem; font-size: 0.85rem;">
+        <a href="javascript:void(0)" onclick="showSection('home')" style="color: #CBD5E1; text-decoration: none;">Home</a>
+        <a href="javascript:void(0)" onclick="showSection('report')" style="color: #CBD5E1; text-decoration: none;">Report</a>
+        <a href="javascript:void(0)" onclick="showSection('map')" style="color: #CBD5E1; text-decoration: none;">Map</a>
+        <a href="javascript:void(0)" onclick="openModal('authorityLoginModal')" style="color: #CBD5E1; text-decoration: none;">Authority</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- App Scripts -->
+  <script src="/static/js/i18n.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/report.js"></script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/authority.js"></script>
+
+</body>
+</html>
